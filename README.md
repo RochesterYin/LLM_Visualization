@@ -14,7 +14,7 @@ This project provides tools to evaluate, compare, and visualize the performance 
 
 1. **Clone this repository**:
    ```bash
-   git clone https://github.com/yourusername/code-vulnerability-detection.git
+   git clone https://github.com/RochesterYin/LLM_Visualization.git
    cd code-vulnerability-detection
    ```
 
@@ -85,34 +85,6 @@ The project uses the CodeXGLUE dataset for code vulnerability detection. For dem
 ### Deep Learning Models
 - Long Short-Term Memory (LSTM)
 - Convolutional Neural Network (CNN)
-
-## Pushing to GitHub
-
-If you want to share this project on GitHub:
-
-1. **Create a new repository** on GitHub (without initializing with README or .gitignore)
-
-2. **Initialize your local Git repository**:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit: Code vulnerability detection project"
-   ```
-
-3. **Add the remote repository**:
-   ```bash
-   git remote add origin https://github.com/yourusername/repository-name.git
-   ```
-
-4. **Push to GitHub**:
-   ```bash
-   git push -u origin main
-   ```
-   (Use `master` instead of `main` if your default branch is named "master")
-
-## License
-
-[MIT License](LICENSE)
 
 ## Contributing
 
