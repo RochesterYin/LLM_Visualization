@@ -17,9 +17,17 @@ This system analyzes C/C++ code to detect potential security vulnerabilities wit
 
 ## Dataset
 
+<<<<<<< HEAD
 This project uses the **CodeXGLUE C/C++ vulnerability detection dataset**, which contains:
 - C/C++ functions labeled as either vulnerable (1) or non-vulnerable (0)
 - A diverse set of vulnerability types including buffer overflows, memory leaks, and more
+=======
+1. **Clone this repository**:
+   ```bash
+   git clone https://github.com/RochesterYin/LLM_Visualization.git
+   cd code-vulnerability-detection
+   ```
+>>>>>>> 2647e0eb9a2c45f3515e63f0d2863c69445f79b9
 
 ## Setup and Usage
 
@@ -78,6 +86,7 @@ pip install -r requirements.txt
 
 Results from the CodeXGLUE dataset show varying performance across models:
 
+<<<<<<< HEAD
 | Model | Accuracy | F1 Score | Key Strengths |
 |-------|----------|----------|---------------|
 | CNN | ~61% | ~55% | Best at capturing code patterns |
@@ -94,3 +103,43 @@ Feel free to submit issues or pull requests to improve the system. For major cha
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/) 
+=======
+```bash
+python run_pipeline.py
+```
+
+This will:
+1. Download/prepare sample dataset
+2. Preprocess the data for model training
+3. Train traditional ML and DL models
+4. Generate interpretability visualizations
+5. Launch the dashboard
+
+## Command-line Options
+
+The pipeline supports several options:
+- `--skip-preprocessing`: Skip data preprocessing
+- `--skip-training`: Skip model training
+- `--skip-interpretability`: Skip interpretability generation
+- `--dashboard-only`: Only launch the dashboard
+
+## Dataset
+
+The project uses the CodeXGLUE dataset for code vulnerability detection. For demo purposes, a small sample dataset is generated automatically.
+
+## Models Evaluated
+
+### Traditional ML Models
+- Decision Tree
+- Random Forest
+- Support Vector Machine (SVM)
+- Logistic Regression
+
+### Deep Learning Models
+- Long Short-Term Memory (LSTM)
+- Convolutional Neural Network (CNN)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. 
+>>>>>>> 2647e0eb9a2c45f3515e63f0d2863c69445f79b9
