@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 class ModelInterpretability:
-    def __init__(self, data_path='../processed/features.csv'):
+    def __init__(self, data_path='processed/features.csv'):
         """Initialize with path to processed data"""
         self.data_path = data_path
         self.models = {}
@@ -32,7 +32,7 @@ class ModelInterpretability:
         print("Loading data and models...")
         
         # Check if all necessary files exist
-        models_dir = '../models/saved'
+        models_dir = 'models/saved'
         if not os.path.exists(models_dir):
             print(f"Directory {models_dir} not found. Train models first.")
             return False
@@ -47,7 +47,7 @@ class ModelInterpretability:
         
         # Separate features and labels
         y = df['label']
-        X = df.drop(['label', 'file'], axis=1)
+        X = df.drop(['label', 'file'], axis=1, errors='ignore')
         
         # Save feature names
         self.feature_names = X.columns.tolist()
@@ -83,7 +83,7 @@ class ModelInterpretability:
                 print(f"Model {name} not found at {model_path}")
         
         # Create output directory
-        os.makedirs('../visualization/interpretability', exist_ok=True)
+        os.makedirs('visualization/interpretability', exist_ok=True)
         
         return len(self.models) > 0
     
@@ -136,7 +136,7 @@ class ModelInterpretability:
                     show=False
                 )
                 plt.tight_layout()
-                plt.savefig(f'../visualization/interpretability/shap_summary_{name}.png')
+                plt.savefig(f'visualization/interpretability/shap_summary_{name}.png')
                 plt.close()
                 
                 # Create and save bar plot
@@ -149,7 +149,7 @@ class ModelInterpretability:
                     show=False
                 )
                 plt.tight_layout()
-                plt.savefig(f'../visualization/interpretability/shap_bar_{name}.png')
+                plt.savefig(f'visualization/interpretability/shap_bar_{name}.png')
                 plt.close()
                 
                 print(f"SHAP explanations for {name} saved")
@@ -184,7 +184,7 @@ class ModelInterpretability:
                 
                 for i in samples_to_explain:
                     # Get prediction function
-                    if hasattr(model, 'predict_proba'):
+                    if hasattr(model, "predict_proba"):
                         predict_fn = model.predict_proba
                     else:
                         # Create a wrapper function if predict_proba is not available
@@ -201,7 +201,7 @@ class ModelInterpretability:
                     # Save explanation as image
                     fig = explanation.as_pyplot_figure(label=1)  # Label 1 for vulnerable
                     plt.tight_layout()
-                    plt.savefig(f'../visualization/interpretability/lime_{name}_sample_{i}.png')
+                    plt.savefig(f'visualization/interpretability/lime_{name}_sample_{i}.png')
                     plt.close()
                     
                     # Store explanation data
@@ -220,7 +220,7 @@ class ModelInterpretability:
     
     def save_results(self):
         """Save interpretability results"""
-        output_path = '../models/saved/interpretability_results.json'
+        output_path = 'models/saved/interpretability_results.json'
         
         # Convert results to a serializable format
         serializable_results = {

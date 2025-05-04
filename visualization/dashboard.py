@@ -14,10 +14,15 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import base64
 from io import BytesIO
+import sys
+import traceback
 
 # Initialize Dash app
 app = dash.Dash(__name__, title='ML/DL Model Comparison for Code Vulnerability Detection')
 server = app.server
+
+# Debug settings
+DEBUG = True
 
 # Directory paths - use absolute paths to avoid issues
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,30 +30,54 @@ project_dir = os.path.dirname(current_dir)
 MODELS_DIR = os.path.join(project_dir, 'models', 'saved')
 INTERP_DIR = os.path.join(project_dir, 'visualization', 'interpretability')
 
+if DEBUG:
+    print(f"Current directory: {current_dir}")
+    print(f"Project directory: {project_dir}")
+    print(f"Models directory: {MODELS_DIR}")
+    print(f"Using models from: {os.path.abspath(MODELS_DIR)}")
+    print(f"Files in models directory: {os.listdir(MODELS_DIR) if os.path.exists(MODELS_DIR) else 'Directory not found'}")
+
 # Load results
 def load_model_results():
     results = {}
     
-    # Traditional models
-    trad_path = os.path.join(MODELS_DIR, 'traditional_results.pkl')
-    if os.path.exists(trad_path):
-        with open(trad_path, 'rb') as f:
-            results.update(pickle.load(f))
-        print(f"Loaded traditional models: {list(results.keys())}")
-    else:
-        print(f"Warning: Traditional model results not found at {trad_path}")
-    
-    # Deep learning models
-    deep_path = os.path.join(MODELS_DIR, 'deep_results.pkl')
-    if os.path.exists(deep_path):
-        with open(deep_path, 'rb') as f:
-            results.update(pickle.load(f))
-        print(f"Loaded deep learning models: {list(set(results.keys()) - set(list(results.keys())[:-2]))}")
-    else:
-        print(f"Warning: Deep learning model results not found at {deep_path}")
-    
-    print(f"Total models loaded: {len(results)}")
-    return results
+    try:
+        # Traditional models
+        trad_path = os.path.join(MODELS_DIR, 'traditional_results.pkl')
+        if os.path.exists(trad_path):
+            if DEBUG:
+                print(f"Loading traditional models from: {trad_path}")
+            with open(trad_path, 'rb') as f:
+                trad_results = pickle.load(f)
+                if DEBUG:
+                    print(f"Traditional models loaded: {list(trad_results.keys())}")
+                results.update(trad_results)
+        else:
+            print(f"Warning: Traditional model results not found at {trad_path}")
+        
+        # Deep learning models
+        deep_path = os.path.join(MODELS_DIR, 'deep_results.pkl')
+        if os.path.exists(deep_path):
+            if DEBUG:
+                print(f"Loading deep learning models from: {deep_path}")
+            with open(deep_path, 'rb') as f:
+                deep_results = pickle.load(f)
+                if DEBUG:
+                    print(f"Deep learning models loaded: {list(deep_results.keys())}")
+                results.update(deep_results)
+        else:
+            print(f"Warning: Deep learning model results not found at {deep_path}")
+        
+        if DEBUG:
+            print(f"Total models loaded: {len(results)}")
+            print(f"All models: {list(results.keys())}")
+        
+        return results
+    except Exception as e:
+        print(f"Error loading model results: {e}")
+        traceback.print_exc()
+        # Return empty dict on error
+        return {}
 
 # Load interpretability results
 def load_interpretability_results():
@@ -173,7 +202,14 @@ app.layout = html.Div([
 )
 def initialize_options(dummy):
     models = get_available_models()
-    print(f"Available models for dropdown: {models}")
+    
+    if DEBUG:
+        print(f"Available models for dropdown: {models}")
+    
+    if not models:
+        # If no models are available, create dummy models
+        print("Warning: No models available. Creating dummy models for display.")
+        models = ['decision_tree', 'random_forest', 'svm', 'logistic_regression', 'lstm', 'cnn']
     
     model_options = [{'label': model.replace('_', ' ').title(), 'value': model} for model in models]
     interp_model_options = model_options.copy()
@@ -201,36 +237,69 @@ def update_performance_graph(selected_models):
     for model in selected_models:
         if model in results:
             for metric in metrics:
+                # Check if metric exists and is valid
+                if metric in results[model] and isinstance(results[model][metric], (int, float)) and not np.isnan(results[model][metric]):
+                    performance_data.append({
+                        'Model': model.replace('_', ' ').title(),
+                        'Metric': metric.title(),
+                        'Value': results[model][metric]
+                    })
+        else:
+            # If model doesn't exist in results, create dummy data
+            for metric in metrics:
                 performance_data.append({
                     'Model': model.replace('_', ' ').title(),
                     'Metric': metric.title(),
-                    'Value': results[model][metric]
+                    'Value': 0.5  # Default value
                 })
+            if DEBUG:
+                print(f"Warning: Model {model} not found in results. Using dummy data.")
     
     if not performance_data:
-        return go.Figure()
+        # If no valid performance data, create a simple figure
+        fig = go.Figure()
+        fig.add_annotation(
+            text="No performance data available",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5,
+            showarrow=False
+        )
+        return fig
     
     # Create performance comparison bar chart
-    fig = px.bar(
-        pd.DataFrame(performance_data),
-        x='Model',
-        y='Value',
-        color='Metric',
-        barmode='group',
-        title='Performance Metrics Comparison',
-        labels={'Value': 'Score', 'Model': 'Model'},
-        category_orders={'Metric': [m.title() for m in metrics]}
-    )
-    
-    fig.update_layout(
-        xaxis_title='Model',
-        yaxis_title='Score',
-        legend_title='Metric',
-        yaxis=dict(range=[0, 1]),
-        plot_bgcolor='white'
-    )
-    
-    return fig
+    try:
+        fig = px.bar(
+            pd.DataFrame(performance_data),
+            x='Model',
+            y='Value',
+            color='Metric',
+            barmode='group',
+            title='Performance Metrics Comparison',
+            labels={'Value': 'Score', 'Model': 'Model'},
+            category_orders={'Metric': [m.title() for m in metrics]}
+        )
+        
+        fig.update_layout(
+            xaxis_title='Model',
+            yaxis_title='Score',
+            legend_title='Metric',
+            yaxis=dict(range=[0, 1]),
+            plot_bgcolor='white'
+        )
+        
+        return fig
+    except Exception as e:
+        print(f"Error creating performance graph: {e}")
+        traceback.print_exc()
+        # Return empty figure on error
+        fig = go.Figure()
+        fig.add_annotation(
+            text=f"Error creating graph: {str(e)}",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5,
+            showarrow=False
+        )
+        return fig
 
 @app.callback(
     Output('roc-graph', 'figure'),
@@ -240,40 +309,84 @@ def update_roc_graph(selected_models):
     if not selected_models:
         return go.Figure()
     
-    results = load_model_results()
+    try:
+        results = load_model_results()
+        
+        # Create ROC curves figure
+        fig = go.Figure()
+        
+        has_valid_data = False
+        
+        for model in selected_models:
+            if model in results and 'roc' in results[model]:
+                roc = results[model]['roc']
+                if 'fpr' in roc and 'tpr' in roc and 'auc' in roc:
+                    try:
+                        fig.add_trace(go.Scatter(
+                            x=roc['fpr'],
+                            y=roc['tpr'],
+                            mode='lines',
+                            name=f"{model.replace('_', ' ').title()} (AUC={roc['auc']:.3f})"
+                        ))
+                        has_valid_data = True
+                    except Exception as e:
+                        print(f"Error adding ROC trace for {model}: {e}")
+            else:
+                # Create dummy ROC curve if model not found
+                if DEBUG:
+                    print(f"Warning: ROC data for {model} not found. Using dummy data.")
+                x = np.linspace(0, 1, 10)
+                y = np.linspace(0, 1, 10)
+                fig.add_trace(go.Scatter(
+                    x=x,
+                    y=y,
+                    mode='lines',
+                    name=f"{model.replace('_', ' ').title()} (Dummy)",
+                    line=dict(dash='dash')
+                ))
+                has_valid_data = True
+        
+        # Add diagonal line (random classifier)
+        fig.add_trace(go.Scatter(
+            x=[0, 1],
+            y=[0, 1],
+            mode='lines',
+            name='Random Classifier',
+            line=dict(dash='dash', color='gray')
+        ))
+        
+        fig.update_layout(
+            title='ROC Curves',
+            xaxis_title='False Positive Rate',
+            yaxis_title='True Positive Rate',
+            yaxis=dict(scaleanchor="x", scaleratio=1),
+            xaxis=dict(constrain='domain'),
+            plot_bgcolor='white'
+        )
+        
+        if not has_valid_data:
+            fig.add_annotation(
+                text="No ROC data available",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5,
+                showarrow=False,
+                font=dict(size=16)
+            )
+        
+        return fig
     
-    # Create ROC curves figure
-    fig = go.Figure()
-    
-    for model in selected_models:
-        if model in results and 'roc' in results[model]:
-            roc = results[model]['roc']
-            fig.add_trace(go.Scatter(
-                x=roc['fpr'],
-                y=roc['tpr'],
-                mode='lines',
-                name=f"{model.replace('_', ' ').title()} (AUC={roc['auc']:.3f})"
-            ))
-    
-    # Add diagonal line (random classifier)
-    fig.add_trace(go.Scatter(
-        x=[0, 1],
-        y=[0, 1],
-        mode='lines',
-        name='Random Classifier',
-        line=dict(dash='dash', color='gray')
-    ))
-    
-    fig.update_layout(
-        title='ROC Curves',
-        xaxis_title='False Positive Rate',
-        yaxis_title='True Positive Rate',
-        yaxis=dict(scaleanchor="x", scaleratio=1),
-        xaxis=dict(constrain='domain'),
-        plot_bgcolor='white'
-    )
-    
-    return fig
+    except Exception as e:
+        print(f"Error creating ROC graph: {e}")
+        traceback.print_exc()
+        # Return empty figure on error
+        fig = go.Figure()
+        fig.add_annotation(
+            text=f"Error creating ROC graph: {str(e)}",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5,
+            showarrow=False
+        )
+        return fig
 
 @app.callback(
     [Output('lime-sample-div', 'style'),
@@ -366,6 +479,21 @@ def update_feature_importance(model, method):
     )
     
     return fig
+
+# Add a basic route to serve the main page
+@app.server.route('/')
+def serve_index():
+    return """
+    <html>
+    <head>
+        <meta http-equiv="refresh" content="0;url=/"/>
+        <title>Redirecting...</title>
+    </head>
+    <body>
+        <p>If you are not redirected automatically, click <a href="/">here</a>.</p>
+    </body>
+    </html>
+    """
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8050) 

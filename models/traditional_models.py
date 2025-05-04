@@ -15,14 +15,14 @@ from sklearn.linear_model import LogisticRegression
 import joblib
 
 class TraditionalModels:
-    def __init__(self, data_path='../processed/features.csv'):
+    def __init__(self, data_path='processed/features.csv'):
         """Initialize with path to processed data"""
         self.data_path = data_path
         self.models = {
             'decision_tree': DecisionTreeClassifier(random_state=42),
             'random_forest': RandomForestClassifier(random_state=42),
             'svm': SVC(probability=True, random_state=42),
-            'logistic_regression': LogisticRegression(random_state=42)
+            'logistic_regression': LogisticRegression(random_state=42, max_iter=1000)
         }
         self.results = {}
         
@@ -40,7 +40,11 @@ class TraditionalModels:
         
         # Separate features and labels
         y = df['label']
-        X = df.drop(['label', 'file'], axis=1)
+        
+        # Drop non-feature columns
+        X = df.drop(['label', 'file'], axis=1, errors='ignore')
+        
+        print(f"Features: {X.columns.tolist()}")
         
         # Scale features
         scaler = StandardScaler()
@@ -55,8 +59,8 @@ class TraditionalModels:
         self.feature_names = X.columns
         
         # Save scaler for later use
-        os.makedirs('../models/saved', exist_ok=True)
-        joblib.dump(scaler, '../models/saved/scaler.pkl')
+        os.makedirs('models/saved', exist_ok=True)
+        joblib.dump(scaler, 'models/saved/scaler.pkl')
         
         print(f"Data loaded: {X.shape[0]} samples, {X.shape[1]} features")
         return True
@@ -96,13 +100,13 @@ class TraditionalModels:
                 }
             
             # Save trained model
-            os.makedirs('../models/saved', exist_ok=True)
-            model_path = f'../models/saved/{name}.pkl'
+            os.makedirs('models/saved', exist_ok=True)
+            model_path = f'models/saved/{name}.pkl'
             joblib.dump(model, model_path)
             print(f"Model saved to {model_path}")
         
         # Save results
-        results_path = '../models/saved/traditional_results.pkl'
+        results_path = 'models/saved/traditional_results.pkl'
         with open(results_path, 'wb') as f:
             pickle.dump(self.results, f)
         print(f"Results saved to {results_path}")
