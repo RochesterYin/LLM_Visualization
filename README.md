@@ -31,10 +31,7 @@ pip install -r requirements.txt
 
 1. **With Existing Data**
    
-   The project already includes preprocessed files from the CodeXGLUE dataset:
-   ```bash
-   python run_pipeline.py --dashboard-only
-   ```
+   The project already includes preprocessed files from the CodeXGLUE dataset
 
 2. **Full Training Pipeline**
    
